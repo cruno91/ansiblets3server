@@ -1,0 +1,99 @@
+---
+- name: "Update apt cache"
+  apt:
+    update_cache: yes
+    upgrade: yes
+    cache_valid_time: 3600
+
+- name: "Add teamspeak user"
+  user:
+    name: "{{ teamspeak.service }}"
+    comment: Teamspeak user
+
+- name: "Download teamspeak server"
+  unarchive:
+    src: https://files.teamspeak-services.com/releases/server/3.5.0/teamspeak3-server_linux_amd64-3.5.0.tar.bz2
+    dest: "{{ teamspeak.home }}"
+    remote_src: yes
+    owner: "{{ teamspeak.service }}"
+    group: "{{ teamspeak.service }}"
+
+- name: "Copy teamspeak service file"
+  copy:
+    src: "{{ role_path }}/files/teamspeak.service"
+    dest: /lib/systemd/system/teamspeak.service
+
+- name: "Add Teamspeak protocols to iptables"
+  iptables:
+    chain: INPUT
+    protocol: udp
+    destination_port: 9987
+    jump: ACCEPT
+
+- name: "Add Teamspeak protocols to iptables"
+  iptables:
+    chain: INPUT
+    protocol: udp
+    source_port: 9987
+    jump: ACCEPT
+
+- name: "Add Teamspeak protocols to iptables"
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: 30033
+    jump: ACCEPT
+
+- name: "Add Teamspeak protocols to iptables"
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    source_port: 30033
+    jump: ACCEPT
+
+- name: "Add Teamspeak protocols to iptables"
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: 10011
+    jump: ACCEPT
+
+- name: "Add Teamspeak protocols to iptables"
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    source_port: 10011
+    jump: ACCEPT
+
+- name: "Copy teamspeak TOS"
+  copy:
+    src: "{{ role_path }}/files/.ts3server_license_accepted"
+    dest: "{{ teamspeak.home }}/teamspeak3-server_linux_amd64/.ts3server_license_accepted"
+
+- name: "Start teamspeak service"
+  systemd:
+    name: "{{ teamspeak.service }}"
+    state: started
+    enabled: yes
+
+- name: "Enable teamspeak service to always start"
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: teamspeak
+    enabled: yes
+
+- name: "Get initial log files"
+  find: 
+    paths: "{{ teamspeak.logs }}"
+    patterns: '*.log'
+  register: logs
+
+- name: Output the log file paths"
+  debug: var=item.path
+  with_items:
+    - "{{ logs.files }}"
+
+- name: Output log contents"
+  command: "cat {{ item.path }}"
+  loop: "{{ logs.files }}"

@@ -1,0 +1,6 @@
+---
+teamspeak:
+  home: /home/teamspeak
+  package: teamspeak-server
+  service: teamspeak
+  logs: /home/teamspeak/teamspeak3-server_linux_amd64/logs/
